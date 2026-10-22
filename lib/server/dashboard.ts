@@ -1,0 +1,22 @@
+import 'server-only';
+import { db } from './db';
+import { scopeSql } from './permissions';
+import type { SessionUser } from './auth';
+import { dashboardDemo } from './demo-data';
+const inr=(n:number)=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',notation:'compact',maximumFractionDigits:1}).format(n);
+const dayKey=(d:Date)=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(d);
+export async function getDashboard(user:SessionUser){
+ if(!process.env.MYSQL_DATABASE)return {...dashboardDemo,live:false,revenueLabel:'₹8.42L',revenueFoot:'Illustrative preview trend'};
+ try{
+  const sc=(a:string)=>scopeSql(user,a);const bs=sc('b'),is=sc('i'),vs=sc('v');
+  const [[book]]:any=await db().execute(`SELECT COUNT(*) n FROM bookings b WHERE b.company_id=? AND DATE_FORMAT(CONVERT_TZ(b.pickup_at,'+00:00','+05:30'),'%Y-%m')=DATE_FORMAT(CONVERT_TZ(UTC_TIMESTAMP(),'+00:00','+05:30'),'%Y-%m')${bs.sql}`,[user.companyId,...bs.params]);
+  const [[revenue]]:any=await db().execute(`SELECT COALESCE(SUM(i.total_amount),0) n FROM invoices i WHERE i.company_id=? AND i.invoice_date>=DATE_FORMAT(DATE(CONVERT_TZ(UTC_TIMESTAMP(),'+00:00','+05:30')),'%Y-%m-01') AND i.status<>'void'${is.sql}`,[user.companyId,...is.params]);
+  const [[outstanding]]:any=await db().execute(`SELECT COALESCE(SUM(i.total_amount-COALESCE(p.paid,0)),0) n FROM invoices i LEFT JOIN (SELECT p.invoice_id,SUM(p.amount-COALESCE(r.refunded,0)) paid FROM payments p LEFT JOIN (SELECT payment_id,SUM(amount) refunded FROM payment_refunds GROUP BY payment_id) r ON r.payment_id=p.id WHERE p.status='posted' GROUP BY p.invoice_id) p ON p.invoice_id=i.id WHERE i.company_id=? AND i.status IN ('issued','partially_paid','overdue')${is.sql}`,[user.companyId,...is.params]);
+  const [[fleet]]:any=await db().execute(`SELECT SUM(CASE WHEN v.status='available' THEN 1 ELSE 0 END) available,COUNT(*) total FROM vehicles v WHERE v.company_id=?${vs.sql}`,[user.companyId,...vs.params]);
+  const [revenueRows]:any=await db().execute(`SELECT DATE_FORMAT(i.invoice_date,'%Y-%m-%d') day,COALESCE(SUM(i.total_amount),0) total FROM invoices i WHERE i.company_id=? AND i.invoice_date>=DATE_SUB(DATE(CONVERT_TZ(UTC_TIMESTAMP(),'+00:00','+05:30')),INTERVAL 29 DAY) AND i.invoice_date<=DATE(CONVERT_TZ(UTC_TIMESTAMP(),'+00:00','+05:30')) AND i.status<>'void'${is.sql} GROUP BY i.invoice_date ORDER BY i.invoice_date`,[user.companyId,...is.params]);
+  const revenueByDay=new Map<string,number>(revenueRows.map((r:any)=>[String(r.day),Number(r.total)]));const today=dayKey(new Date());const todayDate=new Date(`${today}T00:00:00Z`);const dailyRevenue:Array<number>=[];for(let i=29;i>=0;i--){const d=new Date(todayDate);d.setUTCDate(d.getUTCDate()-i);dailyRevenue.push(revenueByDay.get(dayKey(d))??0);}
+  const metrics=[{label:'Bookings this month',value:Number(book.n).toLocaleString('en-IN'),delta:'Current month',icon:'calendar',tone:'teal'},{label:'Invoiced revenue',value:inr(Number(revenue.n)),delta:'Invoices issued this month',icon:'rupee',tone:'blue'},{label:'Outstanding',value:inr(Number(outstanding.n)),delta:'Unpaid invoice balance',icon:'clock',tone:'amber'},{label:'Fleet availability',value:fleet.total?`${Math.round(Number(fleet.available)/Number(fleet.total)*100)}%`:'—',delta:`${fleet.available??0} of ${fleet.total??0} vehicles`,icon:'car',tone:'violet'}];
+  const [todayRows]:any=await db().execute(`SELECT b.pickup_at,c.name customer,CONCAT(b.pickup_address,' → ',b.destination) route,v.registration_number vehicle,b.status FROM bookings b JOIN customers c ON c.id=b.customer_id AND c.company_id=b.company_id LEFT JOIN vehicles v ON v.id=b.vehicle_id AND v.company_id=b.company_id WHERE b.company_id=? AND DATE(CONVERT_TZ(b.pickup_at,'+00:00','+05:30'))=DATE(CONVERT_TZ(UTC_TIMESTAMP(),'+00:00','+05:30'))${bs.sql} ORDER BY b.pickup_at LIMIT 8`,[user.companyId,...bs.params]);
+  return {kpis:metrics,schedule:todayRows.map((r:any)=>({time:new Date(r.pickup_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Asia/Kolkata'}),customer:r.customer,route:r.route,vehicle:r.vehicle??'Unassigned',status:String(r.status).replaceAll('_',' ')})),revenue:dailyRevenue,live:true,revenueLabel:inr(Number(revenue.n)),revenueFoot:'Issued invoices this month'};
+ }catch{return {...dashboardDemo,live:false,revenueLabel:'₹8.42L',revenueFoot:'Preview data · database unavailable'};}
+}

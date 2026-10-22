@@ -1,0 +1,12 @@
+import { NextRequest,NextResponse } from 'next/server';
+import { getCurrentUser } from '@/lib/server/auth';
+import { db } from '@/lib/server/db';
+import { scopeSql } from '@/lib/server/permissions';
+export async function GET(req:NextRequest){const user=await getCurrentUser();if(!user)return NextResponse.json({error:'Unauthorized'},{status:401});const field=req.nextUrl.searchParams.get('field');if(!field)return NextResponse.json({options:[]});if(!process.env.MYSQL_DATABASE)return NextResponse.json({options:field==='customer_id'?[['1','Priya Sharma'],['2','Apex Industries'],['3','Aman Verma']]:field==='vehicle_category_id'?[['1','Sedan'],['2','SUV'],['3','Tempo Traveller']]:field==='vehicle_id'?[['1','BR-09-AB-1234 · Innova Crysta'],['2','BR-01-CD-4410 · Dzire']]:field==='driver_id'?[['1','Rajesh Kumar'],['2','Manoj Singh']]:field==='vendor_id'?[['1','Patna Auto Services']]:[]});
+ const scope=(alias:string)=>scopeSql(user,alias);
+ try{let rows:any[]=[];if(field==='customer_id'){const s=scope('c');[rows]=await db().execute<any[]>(`SELECT c.id,CONCAT(c.name,' · ',c.phone) label FROM customers c WHERE c.company_id=? AND c.status='active'${s.sql} ORDER BY c.name LIMIT 200`,[user.companyId,...s.params]);}
+ else if(field==='vehicle_category_id'){[rows]=await db().execute<any[]>('SELECT id,name label FROM vehicle_categories WHERE company_id=? AND is_active=1 ORDER BY name',[user.companyId]);}
+ else if(field==='vehicle_id'){const s=scope('v');[rows]=await db().execute<any[]>(`SELECT v.id,CONCAT(v.registration_number,' · ',v.name) label FROM vehicles v WHERE v.company_id=? AND v.status='available'${s.sql} ORDER BY v.registration_number LIMIT 200`,[user.companyId,...s.params]);}
+ else if(field==='vendor_id'){const s=scope('v');[rows]=await db().execute<any[]>(`SELECT v.id,CONCAT(v.name,' · ',v.vendor_type) label FROM vendors v WHERE v.company_id=? AND v.status='active'${s.sql} ORDER BY v.name LIMIT 200`,[user.companyId,...s.params]);}
+ else if(field==='driver_id'){const s=scope('d');[rows]=await db().execute<any[]>(`SELECT d.id,CONCAT(d.name,' · ',d.phone) label FROM drivers d WHERE d.company_id=? AND d.availability_status='available' AND d.employment_status='active'${s.sql} ORDER BY d.name LIMIT 200`,[user.companyId,...s.params]);}
+ return NextResponse.json({options:rows.map((r:any)=>[String(r.id),r.label??r.name])});}catch{return NextResponse.json({error:'Options could not be loaded.'},{status:503})}}

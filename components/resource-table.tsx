@@ -1,10 +1,456 @@
-'use client';
-import {useState} from 'react';import {useRouter} from 'next/navigation';import type {ModuleDefinition} from '@/lib/server/resources';import {Icon} from './icon';import {WorkflowActions} from './workflow-actions';import {faPlus,faTableList,faXmark,faPen,faBoxArchive} from '@fortawesome/free-solid-svg-icons';
-type Props={moduleKey:string;definition:ModuleDefinition;rows:Record<string,any>[];canCreate:boolean;canEdit:boolean;canArchive:boolean;branches:{id:number;name:string}[];search:string;permissions:string[];demo:boolean};
-const money=(v:any)=>v==null?'—':new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:2}).format(Number(v));
-function value(row:Record<string,any>,col:ModuleDefinition['columns'][number]){const v=row[col.key];if(v===null||v===undefined||v==='')return '—';if(col.kind==='money')return money(v);if(col.kind==='date'){const d=new Date(v);return Number.isNaN(d.getTime())?String(v):d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});}if(col.kind==='status'){const status=String(v).replaceAll('_',' ');const positive=['active','available','confirmed','completed','posted','approved','issued','paid'];const warning=['pending','new','in progress','submitted','draft','scheduled'];return <span className={`status-pill ${positive.includes(status.toLowerCase())?'green':warning.includes(status.toLowerCase())?'amber':status.toLowerCase()==='cancelled'||status.toLowerCase()==='inactive'?'red':''}`}>{status}</span>}return String(v)}
-function editValue(record:Record<string,any>|null,name:string,type?:string):string{if(!record)return '';const v=record[name];if(v===null||v===undefined)return '';if(type==='checkbox')return v===true||v===1||v==='1'||v==='on'?'1':'';if(type==='date')return String(v).slice(0,10);if(type==='datetime-local'){const d=new Date(v);return Number.isNaN(d.getTime())?'':new Date(d.getTime()+330*60_000).toISOString().slice(0,16)}return String(v)}
-const linkedIds=['customer_id','vehicle_id','driver_id','vehicle_category_id','vendor_id'];
-export function ResourceTable({moduleKey,definition,rows,canCreate,canEdit,canArchive,branches,search,permissions,demo}:Props){const[open,setOpen]=useState(false);const[busy,setBusy]=useState(false);const[loadingEdit,setLoadingEdit]=useState(false);const[error,setError]=useState('');const[options,setOptions]=useState<Record<string,[string,string][]>>({});const[editing,setEditing]=useState<Record<string,any>|null>(null);const router=useRouter();async function loadOptions(name:string){if(options[name])return;try{const r=await fetch(`/api/options?field=${encodeURIComponent(name)}`);const d=await r.json();if(r.ok)setOptions(o=>({...o,[name]:d.options??[]}))}catch{setError('Dropdown options could not be loaded.')}}async function startEdit(row:Record<string,any>){setLoadingEdit(true);setError('');try{for(const field of definition.createFields??[])if(linkedIds.includes(field.name))await loadOptions(field.name);const r=await fetch(`/api/resources/${moduleKey}?id=${row.id}`);const d=await r.json();if(!r.ok)throw new Error(d.error||'Record details could not be loaded.');setEditing(d.record);setOpen(true)}catch(e){setError(e instanceof Error?e.message:'Record details could not be loaded.')}finally{setLoadingEdit(false)}}async function submit(e:React.FormEvent<HTMLFormElement>){e.preventDefault();setBusy(true);setError('');const data=Object.fromEntries(new FormData(e.currentTarget).entries());try{const r=await fetch(`/api/resources/${moduleKey}`,{method:editing?'PATCH':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(editing?{...data,id:editing.id}:data)});const d=await r.json();if(!r.ok)throw new Error(d.error||'Could not save record.');setOpen(false);setEditing(null);router.refresh()}catch(x){setError(x instanceof Error?x.message:'Could not save record.')}finally{setBusy(false)}}async function archive(row:Record<string,any>){if(!confirm(`Archive this ${definition.title.toLowerCase().replace(/s$/,'')} record? It will remain in history.`))return;setError('');try{const r=await fetch(`/api/resources/${moduleKey}`,{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:row.id})});const d=await r.json();if(!r.ok)throw new Error(d.error||'Record could not be archived.');router.refresh()}catch(e){setError(e instanceof Error?e.message:'Record could not be archived.')}}
-return <><div className="surface-card"><div className="card-header resource-header"><div><h2>{definition.title} directory</h2><p>{rows.length} record{rows.length===1?'':'s'}{search?` matching “${search}”`:''}</p></div><div className="module-head-actions"><span className="demo-tag">{demo?'Preview only':'Live data'}</span>{canCreate&&<button className="btn btn-primary" onClick={()=>{setEditing(null);setError('');setOpen(true)}}><Icon icon={faPlus}/> <span className="ms-1">New {definition.title.replace(/s$/,'')}</span></button>}</div></div>{error&&!open&&<div className="alert alert-danger m-3">{error}</div>}<div className="table-wrap"><table className="data-table"><thead><tr>{definition.columns.map(c=><th key={c.key}>{c.label}</th>)}<th>Actions</th></tr></thead><tbody>{rows.map((row,i)=><tr key={row.id??i}>{definition.columns.map(c=><td key={c.key}>{value(row,c)}</td>)}<td><div className="row-actions"><WorkflowActions moduleKey={moduleKey} row={row} permissions={permissions}/>{canEdit&&<button className="workflow-button" title="Edit record" onClick={()=>startEdit(row)} disabled={loadingEdit}><Icon icon={faPen}/><span>Edit</span></button>}{canArchive&&<button className="workflow-button reject" title="Archive record" onClick={()=>archive(row)}><Icon icon={faBoxArchive}/><span>Archive</span></button>}</div></td></tr>)}</tbody></table>{rows.length===0&&<div className="empty-state"><Icon icon={faTableList}/><strong>No records to show</strong><span>{search?'Try another search term.':'Create your first record or connect a populated MySQL database.'}</span></div>}</div></div>
-{open&&<div className="modal-backdrop show" role="presentation" onClick={()=>!busy&&setOpen(false)}><div className="resource-modal" role="dialog" aria-modal="true" aria-labelledby="create-title" onClick={e=>e.stopPropagation()}><div className="modal-heading"><div><span className="eyebrow">{editing?'EDIT RECORD':'NEW RECORD'}</span><h2 id="create-title">{editing?'Edit': 'Create'} {definition.title.replace(/s$/,'')}</h2></div><button className="icon-button" onClick={()=>setOpen(false)} aria-label="Close"><Icon icon={faXmark}/></button></div><form key={editing?.id??'new'} onSubmit={submit}><div className="modal-fields">{(definition.createFields??[]).map(field=><label className="form-label" key={field.name}>{field.label}{field.required&&<span className="text-danger"> *</span>}{field.type==='checkbox'?<div className="checkbox-field mt-2"><input className="form-check-input" type="checkbox" name={field.name} defaultChecked={Boolean(editValue(editing,field.name,field.type))}/><span>Include night surcharge when applicable</span></div>:field.type==='branch'?<select className="form-select mt-1" name={field.name} defaultValue={editValue(editing,field.name) || ''}><option value="">Use my branch</option>{branches.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</select>:field.options?<select className="form-select mt-1" name={field.name} required={field.required} defaultValue={editValue(editing,field.name)||field.options[0]?.[0]}>{field.options.map(([v,label])=><option key={v} value={v}>{label}</option>)}</select>:linkedIds.includes(field.name)?<select className="form-select mt-1" name={field.name} required={field.required} defaultValue={editValue(editing,field.name)} onFocus={()=>loadOptions(field.name)}><option value="">Choose {field.label.toLowerCase()}</option>{(options[field.name]??[]).map(([v,label])=><option key={v} value={v}>{label}</option>)}</select>:<input className="form-control mt-1" name={field.name} type={field.type??'text'} required={field.required} min={field.type==='number'?'0':undefined} step={field.type==='number'?'any':undefined} maxLength={field.type==='number'?undefined:255} placeholder={field.type==='number'?'0':''} defaultValue={editValue(editing,field.name,field.type)}/>}</label>)}{editing&&moduleKey==='enquiries'&&<label className="form-label">Enquiry status<select className="form-select mt-1" name="status" required defaultValue={editing.status}><option value="new">New</option><option value="contacted">Contacted</option><option value="quoted">Quoted</option><option value="follow_up">Follow-up</option><option value="won">Won</option><option value="lost">Lost</option></select></label>}</div>{error&&<div className="alert alert-danger mt-3 mb-0">{error}</div>}<div className="modal-actions"><button type="button" className="btn btn-light" onClick={()=>setOpen(false)}>Cancel</button><button className="btn btn-primary" disabled={busy}>{busy?'Saving…':editing?'Save changes':'Save record'}</button></div></form></div></div>}{loadingEdit&&<div className="loading-overlay">Loading record…</div>}</>}
+"use client";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import type { ModuleDefinition } from "@/lib/server/resources";
+import { Icon } from "./icon";
+import { WorkflowActions } from "./workflow-actions";
+import {
+  faPlus,
+  faTableList,
+  faXmark,
+  faPen,
+  faBoxArchive,
+} from "@fortawesome/free-solid-svg-icons";
+type Props = {
+  moduleKey: string;
+  definition: ModuleDefinition;
+  rows: Record<string, any>[];
+  canCreate: boolean;
+  canEdit: boolean;
+  canArchive: boolean;
+  branches: { id: number; name: string }[];
+  search: string;
+  permissions: string[];
+  demo: boolean;
+};
+const money = (v: any) =>
+  v == null
+    ? "—"
+    : new Intl.NumberFormat("en-IN", {
+        style: "currency",
+        currency: "INR",
+        maximumFractionDigits: 2,
+      }).format(Number(v));
+function value(
+  row: Record<string, any>,
+  col: ModuleDefinition["columns"][number],
+) {
+  const v = row[col.key];
+  if (v === null || v === undefined || v === "") return "—";
+  if (col.kind === "money") return money(v);
+  if (col.kind === "date") {
+    const d = new Date(v);
+    return Number.isNaN(d.getTime())
+      ? String(v)
+      : d.toLocaleDateString("en-IN", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        });
+  }
+  if (col.kind === "status") {
+    const status = String(v).replaceAll("_", " ");
+    const positive = [
+      "active",
+      "available",
+      "confirmed",
+      "completed",
+      "posted",
+      "approved",
+      "issued",
+      "paid",
+    ];
+    const warning = [
+      "pending",
+      "new",
+      "in progress",
+      "submitted",
+      "draft",
+      "scheduled",
+    ];
+    return (
+      <span
+        className={`status-pill ${positive.includes(status.toLowerCase()) ? "green" : warning.includes(status.toLowerCase()) ? "amber" : status.toLowerCase() === "cancelled" || status.toLowerCase() === "inactive" ? "red" : ""}`}
+      >
+        {status}
+      </span>
+    );
+  }
+  return String(v);
+}
+function editValue(
+  record: Record<string, any> | null,
+  name: string,
+  type?: string,
+): string {
+  if (!record) return "";
+  const v = record[name];
+  if (v === null || v === undefined) return "";
+  if (type === "checkbox")
+    return v === true || v === 1 || v === "1" || v === "on" ? "1" : "";
+  if (type === "date") return String(v).slice(0, 10);
+  if (type === "datetime-local") {
+    const d = new Date(v);
+    return Number.isNaN(d.getTime())
+      ? ""
+      : new Date(d.getTime() + 330 * 60_000).toISOString().slice(0, 16);
+  }
+  return String(v);
+}
+const linkedIds = [
+  "customer_id",
+  "vehicle_id",
+  "driver_id",
+  "vehicle_category_id",
+  "vendor_id",
+];
+export function ResourceTable({
+  moduleKey,
+  definition,
+  rows,
+  canCreate,
+  canEdit,
+  canArchive,
+  branches,
+  search,
+  permissions,
+  demo,
+}: Props) {
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [loadingEdit, setLoadingEdit] = useState(false);
+  const [error, setError] = useState("");
+  const [options, setOptions] = useState<Record<string, [string, string][]>>(
+    {},
+  );
+  const [editing, setEditing] = useState<Record<string, any> | null>(null);
+  const router = useRouter();
+  async function loadOptions(name: string) {
+    if (options[name]) return;
+    try {
+      const r = await fetch(`/api/options?field=${encodeURIComponent(name)}`);
+      const d = await r.json();
+      if (r.ok) setOptions((o) => ({ ...o, [name]: d.options ?? [] }));
+    } catch {
+      setError("Dropdown options could not be loaded.");
+    }
+  }
+  async function startEdit(row: Record<string, any>) {
+    setLoadingEdit(true);
+    setError("");
+    try {
+      for (const field of definition.createFields ?? [])
+        if (linkedIds.includes(field.name)) await loadOptions(field.name);
+      const r = await fetch(`/api/resources/${moduleKey}?id=${row.id}`);
+      const d = await r.json();
+      if (!r.ok)
+        throw new Error(d.error || "Record details could not be loaded.");
+      setEditing(d.record);
+      setOpen(true);
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "Record details could not be loaded.",
+      );
+    } finally {
+      setLoadingEdit(false);
+    }
+  }
+  async function submit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setBusy(true);
+    setError("");
+    const data = Object.fromEntries(new FormData(e.currentTarget).entries());
+    try {
+      const r = await fetch(`/api/resources/${moduleKey}`, {
+        method: editing ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editing ? { ...data, id: editing.id } : data),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || "Could not save record.");
+      setOpen(false);
+      setEditing(null);
+      router.refresh();
+    } catch (x) {
+      setError(x instanceof Error ? x.message : "Could not save record.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function archive(row: Record<string, any>) {
+    if (
+      !confirm(
+        `Archive this ${definition.title.toLowerCase().replace(/s$/, "")} record? It will remain in history.`,
+      )
+    )
+      return;
+    setError("");
+    try {
+      const r = await fetch(`/api/resources/${moduleKey}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: row.id }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || "Record could not be archived.");
+      router.refresh();
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "Record could not be archived.",
+      );
+    }
+  }
+  return (
+    <>
+      <div className="surface-card">
+        <div className="card-header resource-header">
+          <div>
+            <h2>{definition.title} directory</h2>
+            <p>
+              {rows.length} record{rows.length === 1 ? "" : "s"}
+              {search ? ` matching “${search}”` : ""}
+            </p>
+          </div>
+          <div className="module-head-actions">
+            <span className="demo-tag">
+              {demo ? "Preview only" : "Live data"}
+            </span>
+            {canCreate && (
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  setEditing(null);
+                  setError("");
+                  setOpen(true);
+                }}
+              >
+                <Icon icon={faPlus} />{" "}
+                <span className="ms-1">
+                  New {definition.title.replace(/s$/, "")}
+                </span>
+              </button>
+            )}
+          </div>
+        </div>
+        {error && !open && (
+          <div className="alert alert-danger m-3">{error}</div>
+        )}
+        <div className="table-wrap">
+          <table className="data-table">
+            <thead>
+              <tr>
+                {definition.columns.map((c) => (
+                  <th key={c.key}>{c.label}</th>
+                ))}
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row, i) => (
+                <tr key={row.id ?? i}>
+                  {definition.columns.map((c) => (
+                    <td key={c.key}>{value(row, c)}</td>
+                  ))}
+                  <td>
+                    <div className="row-actions">
+                      <WorkflowActions
+                        moduleKey={moduleKey}
+                        row={row}
+                        permissions={permissions}
+                      />
+                      {canEdit && (
+                        <button
+                          className="workflow-button"
+                          title="Edit record"
+                          onClick={() => startEdit(row)}
+                          disabled={loadingEdit}
+                        >
+                          <Icon icon={faPen} />
+                          <span>Edit</span>
+                        </button>
+                      )}
+                      {canArchive && (
+                        <button
+                          className="workflow-button reject"
+                          title="Archive record"
+                          onClick={() => archive(row)}
+                        >
+                          <Icon icon={faBoxArchive} />
+                          <span>Archive</span>
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {rows.length === 0 && (
+            <div className="empty-state">
+              <Icon icon={faTableList} />
+              <strong>No records to show</strong>
+              <span>
+                {search
+                  ? "Try another search term."
+                  : "Create your first record or connect a populated MySQL database."}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+      {open && (
+        <div
+          className="modal-backdrop show"
+          role="presentation"
+          onClick={() => !busy && setOpen(false)}
+        >
+          <div
+            className="resource-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="create-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-heading">
+              <div>
+                <span className="eyebrow">
+                  {editing ? "EDIT RECORD" : "NEW RECORD"}
+                </span>
+                <h2 id="create-title">
+                  {editing ? "Edit" : "Create"}{" "}
+                  {definition.title.replace(/s$/, "")}
+                </h2>
+              </div>
+              <button
+                className="icon-button"
+                onClick={() => setOpen(false)}
+                aria-label="Close"
+              >
+                <Icon icon={faXmark} />
+              </button>
+            </div>
+            <form key={editing?.id ?? "new"} onSubmit={submit}>
+              <div className="modal-fields">
+                {(definition.createFields ?? []).map((field) => (
+                  <label className="form-label" key={field.name}>
+                    {field.label}
+                    {field.required && <span className="text-danger"> *</span>}
+                    {field.type === "checkbox" ? (
+                      <div className="checkbox-field mt-2">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          name={field.name}
+                          defaultChecked={Boolean(
+                            editValue(editing, field.name, field.type),
+                          )}
+                        />
+                        <span>Include night surcharge when applicable</span>
+                      </div>
+                    ) : field.type === "branch" ? (
+                      <select
+                        className="form-select mt-1"
+                        name={field.name}
+                        defaultValue={editValue(editing, field.name) || ""}
+                      >
+                        <option value="">Use my branch</option>
+                        {branches.map((b) => (
+                          <option key={b.id} value={b.id}>
+                            {b.name}
+                          </option>
+                        ))}
+                      </select>
+                    ) : field.options ? (
+                      <select
+                        className="form-select mt-1"
+                        name={field.name}
+                        required={field.required}
+                        defaultValue={
+                          editValue(editing, field.name) ||
+                          field.options[0]?.[0]
+                        }
+                      >
+                        {field.options.map(([v, label]) => (
+                          <option key={v} value={v}>
+                            {label}
+                          </option>
+                        ))}
+                      </select>
+                    ) : linkedIds.includes(field.name) ? (
+                      <select
+                        className="form-select mt-1"
+                        name={field.name}
+                        required={field.required}
+                        defaultValue={editValue(editing, field.name)}
+                        onFocus={() => loadOptions(field.name)}
+                      >
+                        <option value="">
+                          Choose {field.label.toLowerCase()}
+                        </option>
+                        {(options[field.name] ?? []).map(([v, label]) => (
+                          <option key={v} value={v}>
+                            {label}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        className="form-control mt-1"
+                        name={field.name}
+                        type={field.type ?? "text"}
+                        required={field.required}
+                        min={field.type === "number" ? "0" : undefined}
+                        step={field.type === "number" ? "any" : undefined}
+                        maxLength={field.type === "number" ? undefined : 255}
+                        placeholder={field.type === "number" ? "0" : ""}
+                        defaultValue={editValue(
+                          editing,
+                          field.name,
+                          field.type,
+                        )}
+                      />
+                    )}
+                  </label>
+                ))}
+                {editing && moduleKey === "enquiries" && (
+                  <label className="form-label">
+                    Enquiry status
+                    <select
+                      className="form-select mt-1"
+                      name="status"
+                      required
+                      defaultValue={editing.status}
+                    >
+                      <option value="new">New</option>
+                      <option value="contacted">Contacted</option>
+                      <option value="quoted">Quoted</option>
+                      <option value="follow_up">Follow-up</option>
+                      <option value="won">Won</option>
+                      <option value="lost">Lost</option>
+                    </select>
+                  </label>
+                )}
+              </div>
+              {error && (
+                <div className="alert alert-danger mt-3 mb-0">{error}</div>
+              )}
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="btn btn-light"
+                  onClick={() => setOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button className="btn btn-primary" disabled={busy}>
+                  {busy ? "Saving…" : editing ? "Save changes" : "Save record"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {loadingEdit && <div className="loading-overlay">Loading record…</div>}
+    </>
+  );
+}

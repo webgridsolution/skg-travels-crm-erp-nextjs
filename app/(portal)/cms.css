@@ -1,0 +1,4 @@
+/* Extras for Route SEO / Blog forms. Base layout, editor and table styles come from area-seo-pages/area-seo.css. */
+.area-seo-fieldset .three { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.area-seo-fieldset .form-check input { margin: 0; accent-color: var(--brand); }
+@media (max-width: 575px) { .area-seo-fieldset .three { grid-template-columns: 1fr; } }

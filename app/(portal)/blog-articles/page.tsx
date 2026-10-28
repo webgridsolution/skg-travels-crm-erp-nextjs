@@ -1,4 +1,5 @@
-import './../cms.css';
+import '../area-seo-pages/area-seo.css';
+import '../cms.css';
 import { notFound } from 'next/navigation';
 import { getCurrentUser, hasPermission, databaseConfigured } from '@/lib/server/auth';
 import { siteUrl } from '@/lib/server/area-seo';

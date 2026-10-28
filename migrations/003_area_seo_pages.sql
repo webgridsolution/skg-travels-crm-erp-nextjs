@@ -1,0 +1,31 @@
+CREATE TABLE IF NOT EXISTS area_seo_pages (
+  id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  company_id BIGINT UNSIGNED NOT NULL,
+  area_name VARCHAR(120) NOT NULL,
+  city_name VARCHAR(100) NOT NULL,
+  slug VARCHAR(190) NOT NULL,
+  h1_title VARCHAR(255) NOT NULL,
+  seo_title VARCHAR(255) NOT NULL,
+  meta_description VARCHAR(500),
+  keywords TEXT,
+  canonical_url VARCHAR(500),
+  hero_image_path VARCHAR(190),
+  intro_html MEDIUMTEXT,
+  body_html MEDIUMTEXT,
+  faq_html MEDIUMTEXT,
+  head_scripts MEDIUMTEXT,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  is_published BOOLEAN NOT NULL DEFAULT FALSE,
+  created_by BIGINT UNSIGNED,
+  updated_by BIGINT UNSIGNED,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_area_seo_slug(slug),
+  INDEX ix_area_seo_public(is_published, is_active, city_name),
+  INDEX ix_area_seo_company(company_id, updated_at),
+  CONSTRAINT fk_area_seo_company FOREIGN KEY(company_id) REFERENCES companies(id) ON DELETE RESTRICT,
+  CONSTRAINT fk_area_seo_created FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT fk_area_seo_updated FOREIGN KEY(updated_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+INSERT IGNORE INTO permissions(name) VALUES ('area_seo.view'),('area_seo.create'),('area_seo.update'),('area_seo.delete');
+INSERT IGNORE INTO role_permissions(role_id, permission_id) SELECT r.id, p.id FROM roles r JOIN permissions p ON p.name IN ('area_seo.view','area_seo.create','area_seo.update','area_seo.delete') WHERE r.name = 'Super Admin'

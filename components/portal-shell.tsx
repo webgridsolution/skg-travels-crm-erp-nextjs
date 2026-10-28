@@ -32,6 +32,7 @@ import {
   faXmark,
   faSun,
   faMoon,
+  faGlobe,
 } from "@fortawesome/free-solid-svg-icons";
 import type { SessionUser } from "@/lib/server/auth";
 const navGroups = [
@@ -73,6 +74,10 @@ const navGroups = [
       ["/roles", "Roles & access", "roles.view", faShieldHalved],
       ["/settings", "Company settings", "settings.view", faSliders],
     ],
+  },
+  {
+    name: "Website CMS",
+    items: [["/area-seo-pages", "Area SEO Pages", "area_seo.view", faGlobe]],
   },
 ] as const;
 export function PortalShell({

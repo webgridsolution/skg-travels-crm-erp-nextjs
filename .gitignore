@@ -9,3 +9,5 @@ tsconfig.tsbuildinfo
 
 node_modules/
 *.zip
+
+storage/

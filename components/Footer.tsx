@@ -1,6 +1,6 @@
 
 import Link from "next/link";
-
+import Image from 'next/image';
 const exploreLinks = [
   { label: "Home", href: "/" },
   { label: "Services", href: "/services" },
@@ -125,7 +125,15 @@ export default function Footer() {
         {/* Brand */}
         <div className="foot-brand">
           <Link href="/" className="logo light foot-logo">
-            <span className="foot-logo-icon">✦</span>
+            <span className="foot-logo-ico"><Image
+                                                    src="/images/logo.png"
+                                                    alt="SKG Travels Logo"
+                                                    width={40}
+                                                    height={40}
+                                                    priority
+                                                    className="brand-logo"
+                                                    style={{ borderRadius: "8px" }}
+                                                /></span>
             SKG<span>Travels</span>
           </Link>
 
@@ -239,7 +247,7 @@ export default function Footer() {
         <div className="wrap foot-bottom-inner">
           <p>
             © {new Date().getFullYear()} SKG Travels.
-            <span> All rights reserved.</span>
+            <span> All rights reserved. Designed by <a href="https://webgridsolution.com" style={{ textDecoration: "none" }}>Webgridsolution</a>.</span>
           </p>
 
           <p className="foot-bottom-tagline">

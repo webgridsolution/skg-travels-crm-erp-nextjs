@@ -1,2 +1,99 @@
-import Link from 'next/link';import { notFound } from 'next/navigation';import { getCurrentUser,hasPermission } from '@/lib/server/auth';import { getModuleRows,modules,type ModuleKey } from '@/lib/server/resources';
-export default async function SearchPage({searchParams}:{searchParams:Promise<{q?:string}>}){const {q=''}=await searchParams;const u=await getCurrentUser();if(!u)notFound();const keys=Object.keys(modules) as ModuleKey[];const found=await Promise.all(keys.filter(k=>hasPermission(u,modules[k].permission)).map(async k=>({key:k,title:modules[k].title,rows:await getModuleRows(u,k,q)})));const results=found.flatMap(g=>g.rows.map((r:any)=>({key:g.key,title:g.title,row:r,label:String(r.name??r.customer_name??r.contact_name??r.registration_number??r.booking_number??r.invoice_number??r.quotation_number??r.enquiry_number??r.expense_number??r.driver_code??r.vendor_code??r.employee_code??'Record'),detail:String(r.phone??r.destination??r.status??'')}))).slice(0,80);return <><div className="page-heading"><div><div className="eyebrow">WORKSPACE / SEARCH</div><h1>Search</h1><p>{q?`Results for “${q}”`:'Search across your permitted workspace records.'}</p></div></div><form action="/search" className="resource-search-row"><div className="search-control"><span>⌕</span><input name="q" defaultValue={q} minLength={2} placeholder="Search records…"/></div><button className="btn btn-primary">Search</button></form><div className="surface-card">{results.length?results.map((r,i)=><Link href={`/${r.key}`} className="search-result" key={`${r.key}-${i}`}><span><b>{r.label}</b><small>{r.detail||r.title}</small></span><em>{r.title}</em></Link>):<div className="empty-state"><strong>{q?'No matching records':'Enter at least two characters'}</strong><span>Results respect your assigned branch permissions.</span></div>}</div></>}
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { getCurrentUser, hasPermission } from "@/lib/server/auth";
+import { getModuleRows, modules, type ModuleKey } from "@/lib/server/resources";
+export default async function SearchPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const { q = "" } = await searchParams;
+  const u = await getCurrentUser();
+  if (!u) notFound();
+  const keys = Object.keys(modules) as ModuleKey[];
+  const found = await Promise.all(
+    keys
+      .filter((k) => hasPermission(u, modules[k].permission))
+      .map(async (k) => ({
+        key: k,
+        title: modules[k].title,
+        rows: await getModuleRows(u, k, q),
+      })),
+  );
+  const results = found
+    .flatMap((g) =>
+      g.rows.map((r: any) => ({
+        key: g.key,
+        title: g.title,
+        row: r,
+        label: String(
+          r.name ??
+            r.customer_name ??
+            r.contact_name ??
+            r.registration_number ??
+            r.booking_number ??
+            r.invoice_number ??
+            r.quotation_number ??
+            r.enquiry_number ??
+            r.expense_number ??
+            r.driver_code ??
+            r.vendor_code ??
+            r.employee_code ??
+            "Record",
+        ),
+        detail: String(r.phone ?? r.destination ?? r.status ?? ""),
+      })),
+    )
+    .slice(0, 80);
+  return (
+    <>
+      <div className="page-heading">
+        <div>
+          <div className="eyebrow">WORKSPACE / SEARCH</div>
+          <h1>Search</h1>
+          <p>
+            {q
+              ? `Results for “${q}”`
+              : "Search across your permitted workspace records."}
+          </p>
+        </div>
+      </div>
+      <form action="/search" className="resource-search-row">
+        <div className="search-control">
+          <span>⌕</span>
+          <input
+            name="q"
+            defaultValue={q}
+            minLength={2}
+            placeholder="Search records…"
+          />
+        </div>
+        <button className="btn btn-primary">Search</button>
+      </form>
+      <div className="surface-card">
+        {results.length ? (
+          results.map((r, i) => (
+            <Link
+              href={`/${r.key}`}
+              className="search-result"
+              key={`${r.key}-${i}`}
+            >
+              <span>
+                <b>{r.label}</b>
+                <small>{r.detail || r.title}</small>
+              </span>
+              <em>{r.title}</em>
+            </Link>
+          ))
+        ) : (
+          <div className="empty-state">
+            <strong>
+              {q ? "No matching records" : "Enter at least two characters"}
+            </strong>
+            <span>Results respect your assigned branch permissions.</span>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}

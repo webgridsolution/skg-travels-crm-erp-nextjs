@@ -4,6 +4,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import Image from 'next/image';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faTaxi,
@@ -88,7 +89,14 @@ export default function Header() {
             className="logo"
             onClick={() => setOpen(false)}
           >
-            SKG<span>Travels</span>
+            <Image
+                                        src="/images/logo.png"
+                                        alt="SKG Travels Logo"
+                                        width={40}
+                                        height={40}
+                                        priority
+                                        className="brand-logo"
+                                    />SKG<span>Travels</span>
           </Link>
 
           <nav className={`menu ${open ? "open" : ""}`}>

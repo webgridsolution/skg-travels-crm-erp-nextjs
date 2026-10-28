@@ -74,13 +74,21 @@ export default function Hero() {
           </ul>
 
           <Image
-            className="h-car"
-            src="/cars/hero-innova.png"
-            alt="Innova taxi"
-            width={400}
-            height={230}
-            priority
-          />
+    src="/images/SKG Travels_ India Rental Cars.png"
+    alt="SKG Travels Logo"
+    width={800}
+    height={200}
+    priority
+    // className="h-car"
+    style={{
+        borderRadius: "8px",
+        width: "auto",
+        height: "auto",
+        maxWidth: "100%",
+        objectFit: "contain",
+        marginTop: "20px",
+    }}
+/>
         </div>
 
         <form className="bk" onSubmit={(e) => e.preventDefault()}>

@@ -1,0 +1,335 @@
+.page {
+  --green: #5fa80f;
+  --green-dark: #3f7a00;
+  --green-soft: #eefadb;
+  --navy: #112d45;
+  --ink: #12293b;
+  --muted: #53667a;
+  --line: #e4eaf0;
+  --bg: #fafbfc;
+
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--f-body), system-ui, sans-serif;
+}
+
+.page h1,
+.page h2,
+.page h3 {
+  font-family: var(--f-display), system-ui, sans-serif;
+  color: var(--navy);
+  margin: 0;
+}
+
+.wrap {
+  max-width: 1150px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* HERO */
+.hero {
+  margin: 56px 0 40px;
+  padding: 56px 32px;
+  text-align: center;
+  border-radius: 24px;
+  border: 1px solid #eef3e0;
+  background: linear-gradient(135deg, #f4fcdf 0%, #f7faf8 45%, #f3f8fb 100%);
+  box-shadow: 0 6px 24px rgba(17, 45, 69, 0.05);
+}
+
+.hero h1 {
+  font-size: clamp(2.2rem, 5vw, 3rem);
+  margin: 10px 0 24px;
+}
+
+.hero p {
+  max-width: 760px;
+  margin: 0 auto 10px;
+  line-height: 1.8;
+  color: var(--ink);
+}
+
+.eyebrow,
+.eyebrowSmall,
+.eyebrowGreen {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--green-dark);
+}
+
+.eyebrowGreen {
+  color: #8fd11f;
+}
+
+/* GRID */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  align-items: start;
+  padding-bottom: 72px;
+}
+
+.right {
+  display: grid;
+  gap: 24px;
+}
+
+/* CARDS */
+.card {
+  padding: 28px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  box-shadow: 0 4px 18px rgba(17, 45, 69, 0.04);
+}
+
+.card h2 {
+  font-size: 1.6rem;
+  margin: 6px 0 8px;
+}
+
+.muted {
+  margin: 0 0 20px;
+  font-size: 0.92rem;
+  color: var(--muted);
+}
+
+/* QUICK CONTACT */
+.quick {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.quickItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  min-width: 0;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--ink);
+  text-decoration: none;
+  background: #f8fafb;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow-wrap: anywhere;
+  transition: border-color 0.2s;
+}
+
+.quickItem:hover {
+  border-color: var(--green);
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  color: var(--green-dark);
+  background: var(--green-soft);
+  border-radius: 12px;
+}
+
+.divider {
+  margin: 28px 0 20px;
+  border: 0;
+  border-top: 1px solid var(--line);
+}
+
+/* BRANCH TABS */
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 16px;
+  font: inherit;
+  font-weight: 500;
+  color: var(--navy);
+  background: transparent;
+  border: 0;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.tab svg {
+  color: var(--green);
+}
+
+.tab:hover {
+  background: #f3f8ea;
+}
+
+.tabActive {
+  background: var(--green-soft);
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--green-dark);
+  outline-offset: 2px;
+}
+
+.branchBox {
+  padding: 24px;
+  background: #f2fbdf;
+  border: 2px solid #c5e58d;
+  border-radius: 16px;
+}
+
+.branchBox h3 {
+  padding-bottom: 14px;
+  margin-bottom: 14px;
+  font-size: 1.2rem;
+  border-bottom: 1px solid #d8e9b5;
+}
+
+.branchBox p {
+  margin: 0;
+  line-height: 1.8;
+}
+
+/* HELP CARD */
+.helpCard {
+  padding: 28px;
+  color: #dbe6ef;
+  background: radial-gradient(circle at 90% 0%, rgba(95, 168, 15, 0.3), transparent 45%), var(--navy);
+  border-radius: 20px;
+}
+
+.helpCard h2 {
+  margin: 8px 0 10px;
+  font-size: 1.6rem;
+  color: #fff;
+}
+
+.helpCard p {
+  margin: 0 0 20px;
+  font-size: 0.92rem;
+}
+
+.helpPhone {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #fff;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+}
+
+.helpPhone svg {
+  color: #8fd11f;
+}
+
+.helpMail {
+  display: block;
+  margin-top: 18px;
+  font-size: 0.9rem;
+  color: #fff;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  overflow-wrap: anywhere;
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .hero {
+    padding: 40px 20px;
+  }
+
+  .quick {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ENQUIRY FORM (styles the shared EnquiryForm inside the quote card) */
+.formCard form {
+  display: grid;
+  gap: 12px;
+}
+
+.formCard label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.formCard input,
+.formCard select,
+.formCard textarea {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 14px 16px;
+  font: inherit;
+  font-size: 0.92rem;
+  color: var(--ink);
+  background: #f8fafb;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.formCard textarea {
+  min-height: 82px;
+  resize: vertical;
+}
+
+.formCard input::placeholder,
+.formCard textarea::placeholder {
+  color: #7a8b9c;
+}
+
+.formCard input:focus,
+.formCard select:focus,
+.formCard textarea:focus {
+  background: #fff;
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(95, 168, 15, 0.15);
+}
+
+.formCard button[type="submit"],
+.formCard button:not([type]) {
+  width: 100%;
+  padding: 14px 18px;
+  font: inherit;
+  font-weight: 600;
+  color: #fff;
+  background: #63a60f;
+  border: 0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.formCard button[type="submit"]:hover,
+.formCard button:not([type]):hover {
+  background: var(--green-dark);
+}

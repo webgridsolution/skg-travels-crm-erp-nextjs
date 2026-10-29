@@ -1,0 +1,148 @@
+.page {
+  --green: #5fa80f;
+  --green-dark: #3f7a00;
+  --green-soft: #eefadb;
+  --navy: #112d45;
+  --ink: #12293b;
+  --muted: #53667a;
+  --line: #e4eaf0;
+
+  background: #fafbfc;
+  color: var(--ink);
+  font-family: var(--f-body), system-ui, sans-serif;
+}
+
+.page h1 {
+  font-family: var(--f-display), system-ui, sans-serif;
+  color: var(--navy);
+  margin: 0;
+}
+
+.wrap {
+  max-width: 1150px;
+  margin: 0 auto;
+  padding: 56px 20px 80px;
+}
+
+.hero {
+  padding: 64px 28px;
+  text-align: center;
+  border-radius: 24px;
+  border: 1px solid #eef3e0;
+  background: linear-gradient(135deg, #f4fcdf 0%, #f7faf8 45%, #f3f8fb 100%);
+  box-shadow: 0 6px 24px rgba(17, 45, 69, 0.05);
+}
+
+.iconBox {
+  display: inline-grid;
+  place-items: center;
+  width: 88px;
+  height: 88px;
+  margin-bottom: 20px;
+  color: var(--green-dark);
+  background: #fff;
+  border: 1px solid #d8e9b5;
+  border-radius: 24px;
+}
+
+.badge {
+  display: inline-block;
+  margin: 0 0 14px;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--green-dark);
+  background: var(--green-soft);
+  border: 1px solid #c5e58d;
+  border-radius: 999px;
+}
+
+.hero h1 {
+  display: block;
+  font-size: clamp(2rem, 5vw, 3rem);
+}
+
+.lead {
+  max-width: 620px;
+  margin: 16px auto 28px;
+  line-height: 1.8;
+  color: var(--muted);
+}
+
+.highlights {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin: 0 0 32px;
+  padding: 0;
+  list-style: none;
+}
+
+.highlights li {
+  padding: 9px 16px;
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: var(--navy);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+
+.cta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.btnPrimary,
+.btnGhost {
+  padding: 14px 24px;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 12px;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.btnPrimary {
+  color: #fff;
+  background: #63a60f;
+}
+
+.btnPrimary:hover {
+  background: var(--green-dark);
+}
+
+.btnGhost {
+  color: var(--navy);
+  background: #fff;
+  border: 1px solid var(--line);
+}
+
+.btnGhost:hover {
+  border-color: var(--green);
+}
+
+.btnPrimary:focus-visible,
+.btnGhost:focus-visible {
+  outline: 2px solid var(--green-dark);
+  outline-offset: 2px;
+}
+
+.note {
+  margin: 28px 0 0;
+  font-size: 0.92rem;
+  color: var(--muted);
+}
+
+.note a {
+  font-weight: 600;
+  color: var(--green-dark);
+}
+
+@media (max-width: 520px) {
+  .hero {
+    padding: 44px 18px;
+  }
+}

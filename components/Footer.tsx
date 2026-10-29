@@ -5,7 +5,7 @@ const exploreLinks = [
   { label: "Home", href: "/" },
   { label: "Services", href: "/services" },
   { label: "About Us", href: "/about" },
-  { label: "Cities", href: "/cities" },
+  // { label: "Cities", href: "/cities" },
   { label: "Travel Blog", href: "/blogs" },
   { label: "Contact Us", href: "/contact" },
   { label: "Privacy Policy", href: "/privacy-policy" },
@@ -177,7 +177,7 @@ export default function Footer() {
             {travelServices.map((service) => (
               <Link
                 key={service}
-                href={`/contact?service=${encodeURIComponent(service)}`}
+                href='/contact'
               >
                 <ArrowIcon />
                 <span>{service}</span>
